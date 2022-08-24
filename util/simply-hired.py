@@ -7,7 +7,7 @@ import time
 joblist = []
 
 for x in range(1,300):
-  url = 'https://www.simplyhired.com/search?q=data+science&pn='
+  url = 'https://www.simplyhired.com/search?q=data+engineer&l=&job=4YxTnrhZo9AmsJWm4ZxptL9gCLGKuzOhlEuINh_WljZGypfj43oSNA'
   r = requests.get(url + str(x))
   soup = BeautifulSoup(r.content,'html.parser')
   content = soup.find_all('div', class_ = 'SerpJob-jobCard card')
@@ -46,6 +46,6 @@ for x in range(1,300):
 
 df = pd.DataFrame(joblist)
 
-print(df.head(100))
-df.to_csv('../data/simplyhired.csv')
+print(df.head())
+df.to_csv('../data/simplyhired-DE-2022.csv')
 
