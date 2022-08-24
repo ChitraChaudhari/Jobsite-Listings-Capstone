@@ -10,9 +10,9 @@ import pandas as pd
 url = 'https://www.dice.com/jobs?q=data%20science&countryCode=US&radius=30&radiusUnit=mi&pageSize=10&language=en&page='
 
 # download chromedriver for your OS from https://chromedriver.storage.googleapis.com/index.html?path=92.0.4515.43/ and set the path below
-driver = webdriver.Chrome('/Users/support/Desktop/chromedriver')
+driver = webdriver.Chrome('/Users/rajpa/Desktop/chromedriver')
 joblist = []
-for page in range(1,100):
+for page in range(1,2):
     driver.get(f'{url}{page}')
     try:
         WebDriverWait(driver, 5).until(lambda s: s.find_element_by_class_name("card").is_displayed())
@@ -48,5 +48,5 @@ for page in range(1,100):
         joblist.append(job)
 
 df = pd.DataFrame(joblist)
-df.to_csv('../data/dice.csv')
+#df.to_csv('../data/dice.csv')
 driver.close()
