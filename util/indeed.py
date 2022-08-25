@@ -6,7 +6,7 @@ import time
 
 joblist = []
 url = 'https://www.indeed.com/jobs?q=data+science&start='
-for x in range(0,3002,10): #need to check pagination  --- check 1 #given 100 at random
+for x in range(1,3002,10): #need to check pagination  --- check 1 #given 100 at random
   r = requests.get(url + str(x))
 
   soup = BeautifulSoup(r.content,'html.parser')
@@ -51,7 +51,9 @@ for x in range(0,3002,10): #need to check pagination  --- check 1 #given 100 at 
 
 
 df = pd.DataFrame(joblist)
+print(df.head(10))
 
-df.to_csv('../data/indeed_jobs.csv')
+
+#df.to_csv('../data/indeed_jobs.csv')
 
 
