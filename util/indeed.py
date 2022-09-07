@@ -12,10 +12,11 @@ joblist = []
 #url = 'https://www.indeed.com/jobs?q=data+science&start='
 url = 'https://www.indeed.com/jobs?q=data+engineer&start='
 
-driver = webdriver.Chrome('/Users/chitr/Desktop/chromedriver')
+driver = webdriver.Chrome(r'C:\Users\Nicho\OneDrive\Desktop\chromedriver.exe')
 
-for x in range(1,3002,10): #need to check pagination  --- check 1 #given 100 at random
-   driver.get(f'{url}{x}')
+for x in range(0,770,10): #need to check pagination  --- check 1 #given 100 at random
+   driver.get(url+str(x))
+   
    try:
        WebDriverWait(driver, 5).until(lambda s: s.find_elements(By.CLASS_NAME,"slider_container"))
    except TimeoutException:
