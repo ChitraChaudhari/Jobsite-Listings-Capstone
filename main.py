@@ -12,7 +12,7 @@ server = app.server
 # see https://plotly.com/python/px-arguments/ for more options
 
 
-##################### LOAD DATA FRAMES ####################
+##################### LOAD DATA FRAMES ####################################################################################
 id_df = pd.read_csv('IndeedCleanedData.csv')
 
 df = pd.DataFrame({
@@ -22,14 +22,14 @@ df = pd.DataFrame({
 })
 
 
-###########################################################
-###########################################################
+###########################################################################################################################
+###########################################################################################################################
 
 
 
 
 
-##################### BUILD VISUALS ###########################
+##################### BUILD VISUALS ###########################################################################################
 fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
 
 df2 = pd.read_csv('https://gist.githubusercontent.com/chriddyp/5d1ea79569ed194d432e56108a04d188/raw/a9f9e8076b837d541398e999dcbac2b2826a81f8/gdp-life-exp-2007.csv')
@@ -56,8 +56,29 @@ indeed_job_count_map = px.choropleth(new_job_count,
 
 indeed_remote_hist = px.histogram(id_df[(id_df['datadate'] == 'Spring 2022')], x="job_type", color="is_remote")
 
-################################################################
-################################################################
+
+id_df['summary_income'] = id_df.salary_lower_range + id_df.salary_upper_range 
+id_income_data = id_df[(id_df.salary_lower_range > 0) | (id_df.salary_upper_range > 0) 
+                       & (id_df.summary_income != 0)]
+lower_ranges = id_income_data[id_income_data['salary_upper_range'] == 0]
+upper_ranges = id_income_data[id_income_data['salary_upper_range'] != 0]
+id_income_data['avg_income'] = lower_ranges['salary_lower_range']
+upper_ranges['avg_income'] = (upper_ranges['salary_lower_range'] + upper_ranges['salary_upper_range'])/2
+id_income_data= pd.concat([lower_ranges,upper_ranges])
+id_income_box = px.box(id_income_data, x="datadate", y="avg_income", color="job_type")
+
+
+
+id_df_income_Scatter = px.box(id_income_data[((id_income_data['is_entrylevel'] != 0) & id_income_data['avg_income'] != 0)], x="experience_level", y="avg_income", points="all")
+
+
+#avg_income_by_state_scatter = px.scatter(id_income_data, 
+                              #x="state", y="avg_income",
+                              #size="avg_income", color="job_type",
+                              #hover_name="title", size_max=15)
+
+################################################################################################################################
+################################################################################################################################
 
 
 
@@ -93,15 +114,35 @@ app.layout = html.Div(children=[
         Indeed.com: 
     '''),
     
+ 
+   
     dcc.Graph(
         id='job_count_map_indeed',
         figure=indeed_job_count_map 
     ),
+    
+    
+    #dcc.Graph(
+        #id='Indeed Sate Income Chart',
+        #figure=avg_income_by_state_scatter
+    #), 
+    
 
     
     dcc.Graph(
         id='Remote-Chart',
         figure=indeed_remote_hist
+    ),
+    
+    dcc.Graph(
+        id='Indeed Income Analysis',
+        figure=id_income_box
+    ), 
+    
+    
+    dcc.Graph(
+        id='Indeed Income Entry Level Analysis',
+        figure=id_df_income_Scatter 
     )
     
 ])
