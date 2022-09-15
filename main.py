@@ -145,21 +145,23 @@ job_distribution = px.pie( values=new_df.job_type.value_counts(),
 
 
 ##################### LAND VISUALS IN WEB APP #####################
+P_formating = {'textAlign' : 'middle','color' : '#3F92B7','font-size':'25px','margin':'40px'}
+H1_formatting = {'textAlign' : 'center','color' : '#3F92B7','backgroundColor' : '#C9C7C7'}
+H2_formating = {'textAlign' : 'left','color' : '#3F92B7','font-size' : '30px'}
+Hr_small = {'color' : '#3F92B7','border-top' : '15px solid #C9C7C7'}
+Hr_Large = {'color' : '#3F92B7','border-top' : '35px solid #C9C7C7'}
+
+
+
+
 app.layout = html.Div(children=[
     
     html.H1(children="Welcom To Job DashBoard !!",
-           style = {
-               'textAlign' : 'center',
-               'color' : '#3F92B7'
-               }
+           style = H1_formatting
            ),
     
     html.H2(children="Top 10 Skills: ",
-            style = {
-               'textAlign' : 'left',
-               'color' : '#3F92B7',
-               'backgroundColor' : '#C9C7C7'
-               }
+            style = H2_formating
             ),
     
     dcc.Graph(
@@ -170,11 +172,7 @@ app.layout = html.Div(children=[
     
    
     html.H2(children="Remote Jobs Trend: ",
-            style = {
-               'textAlign' : 'left',
-               'color' : '#3F92B7',
-               'backgroundColor' : '#C9C7C7'
-               }
+            style = H2_formating
             ),
     
     html.Div(children = "Average Remote Jobs Per Year:",
@@ -183,6 +181,7 @@ app.layout = html.Div(children=[
                 'color' : '#3F92B7',
                 }
             ),
+
     
     
     dcc.Graph(
@@ -197,11 +196,7 @@ app.layout = html.Div(children=[
     ),
     
     html.H2(children="Job Distribution: ",
-            style = {
-               'textAlign' : 'left',
-               'color' : '#3F92B7',
-               'backgroundColor' : '#C9C7C7'
-               }
+            style = H2_formating
             ),
     
     html.Div(children = "Jobs By different Categotries:",
@@ -218,36 +213,119 @@ app.layout = html.Div(children=[
     
     #### Indeed.com ####
     
-    html.Div(children='''
-        Indeed.com: 
-    '''),
+    html.H1(children="Indeed.com Analysis: ",
+            style = Hr_Large
+            ),
+    
     
     dcc.Graph(
         id='job_count_map_indeed',
         figure=indeed_job_count_map 
     ),
+    
+    
+    html.Hr(
+        style = Hr_Large
+    ),
+    
+    html.Div(id = 'IncomeIncomeAnalysisResults', children=[
+    
+            html.H2('Indeed.com: Job Count and Proportion of Remote Jobs',
+                    style = H2_formating),
+    
+            html.P('''Over the past 3 years COVID19 has had a siginificant impact on how tech professionals live their lives. 
+                       In order to keep up with remote education for children and many other factors, many individuals may need to work 
+                       remote either part or full time. By extracting the keyword remote from the location and job title column,
+                       we will be able to determine the proportion of Data Analyst, 
+                       Data Scientist, and Data Engineer posisitons that offer the ability to work remotely.'''    
+           
+                       , style = P_formating),
+    
+            dcc.Graph(
+                    id='Remote-Chart',
+                    figure=indeed_remote_hist),
+    
+            html.P('''57% of Data Analyst listings, and 58% of Data Engineer listings offer the ability to work remote according to the 
+                        Indeed.come data set. On the other hand, Data Scientist has a nearly exact 50/50 split. It is interesting to note that 
+                       Data Science also has a smaller number of job listings compared to the other two job titles, despite scraping the same 
+                       amount of raw data. This suggests that Data Science may have more specialized job titles which are not as clearly defined 
+                       as Analyst or Engineer.'''
+                       , style = P_formating),
+            
+            html.H1('Indeed.com: Income Analysis',
+            style = H1_formatting),
+    
+            html.H2('Indeed.com: Income and Job Type by State',
+                        style = H2_formating),
+            
+            html.P('''One major reason data careers are so attractive is the they offer great compensation. As inflation rises it is important to consider
+                       what income ranges can be earned across the main disciplines of Data Analyst, Data Engineer, and Data Sceintist. Using some historical 
+                       data pulled by the group we also want to compare and contrast how salaries have changed in recent months. '''    
+                       , style = P_formating),
+    
+            dcc.Graph(
+                    id='Indeed Income Analysis',
+                    figure=id_income_box), 
+                
+            html.P('''Across the board all disciplines have seen an increase in salary from Fall of 2021 to Spring 2022. Addtionally, for both time periods 
+                       Data Analyst has the lowest median salary of all disciplines listed ($75-$85k), while data engieering has the highest ($107k-$126k). 
+                       Data Science on the other hand seems to be the middle ground between these two disciplines.  '''    
+                       , style = P_formating),
+     
+            html.Hr(id='Indeed income small break 1',
+                        style = Hr_small),
+                        
+            html.H2('Section Title Place Holder',
+                    style = H2_formating),
+            
+                
+            html.P('''Taking what we found so far, we wanted to build a tool that allowed us to visually search job listings by state 
+                    and income amount to find the idea listings for our situations, and visually compare salary and job counts by state. '''    
+                    , style = P_formating),
 
+            dcc.Graph(
+                    id='Indeed Income Entry Level Analysis',
+                    figure=id_df_income_Scatter),
+                
+                
+            html.P('''Interestingly it seems that the majority of listing have income below $150k which seems to be the upper end of the average
+                       salary range across the board. There are also very few Analyst jobs with salaries in this range. Another point to note 
+                       is that the highest paying analyst posistion is actually for a job not in the field of data. 
+                       This indicates that Indeed's search engine may have some keyword search issues that could be affecting the raw data collected. '''    
+                       , style = P_formating),
+        
+            html.Hr(id='Indeed income small break 2',
+                    style = {
+                    'color' : '#3F92B7',
+                    'border-top' : '15px solid #C9C7C7'}),
     
-    dcc.Graph(
-        id='Remote-Chart',
-        figure=indeed_remote_hist
+    
+    
+           html.H2('Section Title Place Holder',
+                       style = H2_formating),
+    
+    
+           html.P('''Given that we will be looking into entry level posistions, we wanted to dive in to get a sense of what income ranges can be expected 
+                      for folks that are new to this industry. To do this we searched by keyword to find all job listings that aligned with terms commonly used for entry-level jobs. '''    
+                      , style = P_formating),
+           
+            dcc.Graph(
+                    id='Indeed Sate Income Chart',
+                    figure=avg_income_by_state_scatter), 
+        
+            
+            html.P('''It seems the jobs using the key word entry-level have the lowest income of the keywords plotted, while jr and junior offer slightly higher income levels. 
+                      Another keyword offering higher incomes is associate, however this may require more experience. When looking for first jobs on Indeed, it seems that junior/jr 
+                      will yield higher paying job listings that those which explicitly mention "Entry Level".'''    
+                      , style = P_formating),
+            
+            ]),
+    
+    html.Hr(
+        style = Hr_Large
     ),
-    
-    dcc.Graph(
-        id='Indeed Sate Income Chart',
-        figure=avg_income_by_state_scatter
-    ), 
-    
-    dcc.Graph(
-        id='Indeed Income Analysis',
-        figure=id_income_box
-    ), 
-    
-    
-    dcc.Graph(
-        id='Indeed Income Entry Level Analysis',
-        figure=id_df_income_Scatter 
-    ),
+        
+        
     
     ##### Dice.com ####
     html.Div(children = "Dice.com :",
