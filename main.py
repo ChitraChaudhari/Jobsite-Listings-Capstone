@@ -48,7 +48,8 @@ indeed_job_count_map = px.choropleth(new_job_count,
                     locationmode="USA-states", 
                     scope="usa",
                     color='job_count',
-                    color_continuous_scale="PuRd")
+                    color_continuous_scale="PuRd"
+                    ,labels= {'job_count':'Job Count','state':'State'})
 
 
 
@@ -63,6 +64,17 @@ id_income_data['avg_income'] = lower_ranges['salary_lower_range']
 upper_ranges['avg_income'] = (upper_ranges['salary_lower_range'] + upper_ranges['salary_upper_range'])/2
 id_income_data= pd.concat([lower_ranges,upper_ranges])
 id_income_box = px.box(id_income_data, x="datadate", y="avg_income", color="job_type")
+
+
+indeed_income_map_df = id_income_data[['state','avg_income']].groupby('state').mean('avg_income')
+indeed_income_map_df = indeed_income_map_df.reset_index()
+indeed_income_map = px.choropleth(indeed_income_map_df,
+                    locations='state',
+                    locationmode="USA-states", 
+                    scope="usa",
+                    color='avg_income',
+                    color_continuous_scale="PuRd", 
+                    labels= {'avg_income':'Average Income','state':'State'})
 
 
 
@@ -275,7 +287,7 @@ app.layout = html.Div(children=[
             html.Hr(id='Indeed income small break 1',
                         style = Hr_small),
                         
-            html.H2('Section Title Place Holder',
+            html.H2('Salaray and Job Type Scatter',
                     style = H2_formating),
             
                 
@@ -301,7 +313,7 @@ app.layout = html.Div(children=[
     
     
     
-           html.H2('Section Title Place Holder',
+           html.H2('Entry Level Income Aanlysis',
                        style = H2_formating),
     
     
@@ -319,6 +331,31 @@ app.layout = html.Div(children=[
                       will yield higher paying job listings that those which explicitly mention "Entry Level".'''    
                       , style = P_formating),
             
+            
+            html.Hr(style=Hr_small),
+            
+            
+            html.H2('Avg Income Per State',
+                        style = H2_formating),
+            
+            html.P('''Previously in this analysis we examined how many job listings we're posted in each state. To take this one step 
+                   further we wanted to see if there is any correlation between the count of jobs and the average income for each state. 
+                   First, let's see how mapping the U.S. by average income compares to the map of job listing counts.'''    
+                      , style = P_formating),
+            
+            dcc.Graph(
+                    id='Indeed State Income Map',
+                    figure=indeed_income_map),
+            
+            
+            html.P('''Interestingly, despite the job count map having a handful of states which have the majority of jobs, the income 
+                   map is much more evenly distributed. This is surprising considering the fact we expected that due to smaller population sizes, 
+                   there would be more variance.'''    
+                      , style = P_formating),
+            
+            
+            html.Hr(style=Hr_Large)
+        
             ]),
     
     html.Hr(
