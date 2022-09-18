@@ -11,6 +11,8 @@ import dash_html_components as html
 import plotly.express as px
 import pandas as pd
 from plotly import graph_objects as go
+import matplotlib.pyplot as plt
+import squarify
 
 
 app = dash.Dash(__name__)
@@ -24,6 +26,7 @@ server = app.server
 
 id_df = pd.read_csv('IndeedCleanedData.csv')
 dice_df = pd.read_csv('DiceCleanedData.csv')
+old_dice_df = pd.read_csv('Dice_Old_Data.csv')
 new_df = pd.read_csv('Cleaned_New_Data.csv')
 old_df = pd.read_csv('Cleaned_Old_Data.csv')
 
@@ -94,9 +97,21 @@ dice_remote_job_count = go.Figure(data=[go.Pie(labels=['InPerson','Remote'],
                                                 values=dice_df['is_remote'].value_counts(), 
                                                 textinfo='label+percent',
                                                 pull=[0,0.1])])
-dice_remote_job_count.update_traces(textfont_size=20,
+dice_remote_job_count.update_traces(textfont_size=15,
                   marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+dice_remote_job_count.update_layout (title_text = 'Average Remote Jobs Sep 2022')
 
+
+
+old_dice_remote_job_count = go.Figure(data=[go.Pie(labels=['In Person','Remote'], 
+                                                values=old_dice_df['is_remote'].value_counts(), 
+                                                textinfo='label+percent',
+                                                pull=[0,0.1])])
+old_dice_remote_job_count.update_traces(textfont_size=15,
+                  marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+old_dice_remote_job_count.update_layout (title_text = 'Average Remote Jobs March 2022')
+
+dice_remote_hist = px.histogram(dice_df, x="job_type", color="is_remote")
 
 stateJobCount = pd.DataFrame(dice_df['state'].dropna(axis = 0)).value_counts()
 stateJobCount = stateJobCount.to_frame()
@@ -131,7 +146,8 @@ remote_jobs = pd.DataFrame([['2021', old_df['is_remote'].value_counts(normalize=
 remote_jobs_trend = px.bar(remote_jobs,x="Year", y="Average_Jobs", color="Remote", title='Average Jobs Per Year')
 
 df = remote_jobs.query("Remote == 'Yes'")
-remote_jobs_per_year =  px.line(df, x="Year", y="Average_Jobs", markers=True)
+remote_jobs_per_year =  px.line(df, x="Year", y="Average_Jobs", markers=True, title='Average Remote Jobs Per Year')
+
 
 result = new_df.skills.str.split(',',expand=True).stack().value_counts().reset_index()
 result.columns = ['Word','Frequency']
@@ -145,10 +161,19 @@ top_skills = px.funnel( x=result.Frequency.values[0:10], y=result.Word.values[0:
 #    textposition = "inside",
 #    textinfo = "value+percent initial")
  #   )
+ 
 
-job_distribution = px.pie( values=new_df.job_type.value_counts(), 
+job_distribution_avg = px.pie( values=new_df.job_type.value_counts(), 
                           names=new_df.job_type.value_counts().index, 
                           title="Jobs available By Job Category")
+
+result = new_df.groupby(['job_type']).size()
+result = result.to_frame()
+result = result.reset_index()
+result.columns = ['job_type','job_count']
+
+job_distribution_count = px.treemap(result, path=[px.Constant("Title"),'job_type'], values='job_count', color='job_count')
+job_distribution_count.update_layout(margin = dict(t=50, l=25, r=25, b=25))
 
 
 ################################################################
@@ -172,6 +197,10 @@ app.layout = html.Div(children=[
            style = H1_formatting
            ),
     
+    html.H1(children="Total jobs Analysis: ",
+            style = Hr_Large
+            ),
+    
     html.H2(children="Top 10 Skills: ",
             style = H2_formating
             ),
@@ -182,46 +211,79 @@ app.layout = html.Div(children=[
         figure = top_skills
     ),
     
-   
+    html.P('''The funnel chart shows the top 10 skills across all data from different job sites that we collected.  
+               Can’t get away from those schemas and their infamous joining syntax yet! And we see that SQL being 
+               top required skill here. Relational Database Management Systems (RDBMS) are key still to data discovery 
+               and reporting no matter where they reside. Knowledge of terminology and familiarity with algorithms 
+               remain an important part of the Data Engineers skillset. At minimum familiarity with Python’s libraries
+               NumPy, SciPy, pandas, sci-kit learn and some actual experience with Notebooks (Jupyter or online cloud)
+               is vital. Exploratory Data Analysis (EDA) appears again now as part of Data Engineers talents to ensure 
+               ETL /ELT work mentioned earlier is successful. Data quality of the resultant data is crucial as the
+               Data Engineers processes and visualizes datasets. No longer content to be tied to 
+               single cloud vendors companies are opting to join the multi-cloud, instead of which cloud technology 
+               to choose, many enterprises have already chosen a couple. A Data Engineer still needs to have a
+               good understanding of the underlying technologies that make up cloud computing and in particular, 
+               knowledge around IaaS, PaaS, and SaaS implementations. And we can see that as AWS and Azure making 
+               into top-10 skills asked.'''    
+               , style = P_formating),
+    
+    html.Hr(
+        style = Hr_Large
+    ),
+    
     html.H2(children="Remote Jobs Trend: ",
             style = H2_formating
             ),
-    
-    html.Div(children = "Average Remote Jobs Per Year:",
-             style = {
-                'textAlign' : 'left',
-                'color' : '#3F92B7',
-                }
-            ),
-
-    
-    
-    dcc.Graph(
         
-        id='Remote_Jobs_Per_Year',
-        figure=remote_jobs_per_year
-    ),
+    html.Div(
+       dcc.Graph(
+           id='Remote_Jobs_Per_Year',
+           figure=remote_jobs_per_year,
+           style={'width': '800'}
+       ), style={'display': 'inline-block'}),
     
-    dcc.Graph(
-        id='Remote_Jobs_Trend',
-        figure=remote_jobs_trend 
+   html.Div(
+       dcc.Graph(
+           id='Remote_Jobs_Trend',
+           figure=remote_jobs_trend,
+           style={'width': '800'}
+       ), style={'display': 'inline-block'}),
+    
+    
+    html.P('''The outbreak of COVID-19 prompted many employers to shift to a remote work model for all employees 
+               possible in a bid to limit the spread of the coronavirus.  Working remotely has traditionally held
+               a bad reputation, but more and more companies are adopting work-from-home policies.
+               Even though most of the companies started InPerson work we still see the remote work trend 
+               keep on going due to felxibility it offers. From above charts we definately see the increase 
+               in remote jobs between March 2022 and September 2022 by almost 13%. '''    
+               , style = P_formating),
+    
+    html.Hr(
+        style = Hr_Large
     ),
     
     html.H2(children="Job Distribution: ",
             style = H2_formating
             ),
     
-    html.Div(children = "Jobs By different Categotries:",
-             style = {
-                'textAlign' : 'left',
-                'color' : '#3F92B7',
-                }
-            ),
+    html.P(''' Even though we are seeing different trend on different job sites, 
+               when we combined all the data from different job sites we see that majority are titled Data Engineer. 
+               And intrestingly almost 78% jobs are for Data Engineer and Data analyst !! '''    
+               , style = P_formating),
     
-    dcc.Graph(
-        id='job_distribution',
-        figure=job_distribution
-    ),
+    html.Div(
+        dcc.Graph(
+            id='job_distribution',
+            figure=job_distribution_avg,
+            style={'width': '800'}
+        ), style={'display': 'inline-block'}),
+    
+    html.Div(
+        dcc.Graph(
+            id='job_distribution_count',
+            figure=job_distribution_count,
+            style={'width': '800'}
+        ), style={'display': 'inline-block'}),
     
     #### Indeed.com ####
     
@@ -371,11 +433,28 @@ app.layout = html.Div(children=[
                'color' : '#3F92B7',
                }
            ),
-        
-    dcc.Graph(
-        id='dice_remote_count',
-        figure= dice_remote_job_count
-    ),
+    
+    html.Div(
+       dcc.Graph(
+           id='dice_remote_count',
+           figure= dice_remote_job_count,
+           style={'width': '800'}
+       ), style={'display': 'inline-block'}),
+    
+   html.Div(
+       dcc.Graph(
+           id='old_dice_remote_job_count',
+           figure= old_dice_remote_job_count,
+           style={'width': '800'}
+       ), style={'display': 'inline-block'}),
+   
+   html.H2('Dice.com: Job Count and Proportion of Remote Jobs',
+           style = H2_formating),
+   
+   dcc.Graph(
+           id='Dice_Remote-Chart',
+           figure=dice_remote_hist
+           ),
     
     dcc.Graph(
         id='job_count_map_dice',
@@ -385,14 +464,17 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='dice_jobs_across_USA',
         figure=dice_jobs_across_USA 
-    ),
-    
-    dcc.Graph(
-        id='dice_MI_jobs',
-        figure=dice_MI_jobs 
     )
     
+    #dcc.Graph(
+    #    id='dice_MI_jobs',
+    #    figure=dice_MI_jobs 
+    #)
+    
 ])
+
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8080)
