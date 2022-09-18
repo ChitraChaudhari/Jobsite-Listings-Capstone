@@ -13,6 +13,10 @@ import pandas as pd
 from plotly import graph_objects as go
 import matplotlib.pyplot as plt
 import squarify
+from wordcloud import WordCloud
+import io
+import base64
+import numpy as np
 
 
 app = dash.Dash(__name__)
@@ -29,6 +33,7 @@ dice_df = pd.read_csv('DiceCleanedData.csv')
 old_dice_df = pd.read_csv('Dice_Old_Data.csv')
 new_df = pd.read_csv('Cleaned_New_Data.csv')
 old_df = pd.read_csv('Cleaned_Old_Data.csv')
+sh_df = pd.read_csv('SimplyHiredCleanData.csv')
 
 ###########################################################
 ###########################################################
@@ -121,21 +126,6 @@ dice_job_count_map = px.choropleth(stateJobCount,locations='state', locationmode
 dice_job_count_map.update_layout (title_text = 'Jobs count across state')
 
 
-result = dice_df.groupby(['state','city']).size()
-result = result.to_frame()
-result = result.reset_index()
-result.columns = ['state','city','job_count']
-dice_jobs_across_USA = px.treemap(result, path=[px.Constant("USA"), 'state', 'city'], values='job_count')
-dice_jobs_across_USA.update_traces(root_color="lightgrey")
-dice_jobs_across_USA.update_layout(title_text='Treemap of Jobs available across USA', margin = dict(t=50, l=25, r=25, b=25))
-
-
-mi_jobs = result.query("state == 'MI'")
-dice_MI_jobs = px.treemap(mi_jobs, path=[px.Constant("Michigan"), 'city'], values='job_count')
-dice_MI_jobs.update_traces(root_color="lightgrey")
-dice_MI_jobs.update_layout(title_text='Jobs around Michigan on dice.com',margin = dict(t=50, l=25, r=25, b=25))
-
-
 ###### Total Jobs EDA VISUALS ########
 
 remote_jobs = pd.DataFrame([['2021', old_df['is_remote'].value_counts(normalize=True)[1], 'Yes'],
@@ -175,7 +165,91 @@ result.columns = ['job_type','job_count']
 job_distribution_count = px.treemap(result, path=[px.Constant("Title"),'job_type'], values='job_count', color='job_count')
 job_distribution_count.update_layout(margin = dict(t=50, l=25, r=25, b=25))
 
+result = new_df.groupby(['state','city']).size()
+result = result.to_frame()
+result = result.reset_index()
+result.columns = ['state','city','job_count']
+jobs_by_state = px.treemap(result, path=[px.Constant("USA"), 'state', 'city'], values='job_count')
+jobs_by_state.update_traces(root_color="lightgrey")
+jobs_by_state.update_layout(margin = dict(t=50, l=25, r=25, b=25))
 
+mi_jobs = result.query("state == 'MI'")
+jobs_by_MI = px.treemap(mi_jobs, path=[px.Constant("Michigan"), 'city'], values='job_count')
+jobs_by_MI.update_traces(root_color="lightgrey")
+jobs_by_MI.update_layout(margin = dict(t=50, l=25, r=25, b=25))
+
+md_jobs = result.query("state == 'MD'")
+jobs_by_MD = px.treemap(md_jobs, path=[px.Constant("Maryland"), 'city'], values='job_count')
+jobs_by_MD.update_traces(root_color="lightgrey")
+jobs_by_MD.update_layout(margin = dict(t=50, l=25, r=25, b=25))
+jobs_by_MD.show()
+
+
+dice_df['website'] = 'dice'
+id_df['website'] = 'indeed'
+sh_df['website'] = 'simplyhired'
+sh_result = sh_df.groupby(['website','company']).size()
+sh_result = sh_result.to_frame()
+sh_result = sh_result.reset_index()
+sh_result.columns = ['website','company','job_count']
+sh_result = sh_result.sort_values(by='job_count', ascending=False)
+id_result = id_df.groupby(['website','company']).size()
+id_result = id_result.to_frame()
+id_result = id_result.reset_index()
+id_result.columns = ['website','company','job_count']
+id_result = id_result.sort_values(by='job_count', ascending=False)
+dice_result = dice_df.groupby(['website','company']).size()
+dice_result = dice_result.to_frame()
+dice_result = dice_result.reset_index()
+dice_result.columns = ['website','company','job_count']
+dice_result = dice_result.sort_values(by='job_count', ascending=False)
+result = pd.concat([sh_result[0:10],id_result[0:10],dice_result[0:10]], ignore_index=True)
+Companies_by_website = px.sunburst(result, path=['website', 'company'], values='job_count')
+
+############ SimplyHired Visuals ################################
+
+sh_stateJobCount=pd.DataFrame(sh_df['state'].dropna(axis = 0)).value_counts()
+sh_stateJobCount = sh_stateJobCount.to_frame()
+sh_stateJobCount = sh_stateJobCount.reset_index()
+sh_stateJobCount.columns = ['state','totaljobs']
+sh_stateJobCount['state'] = sh_stateJobCount['state'].str.upper()
+sh_stateJobCount['state'] = sh_stateJobCount['state'].str.strip()
+
+sh_job_count_map = px.choropleth(sh_stateJobCount,locations='state', locationmode="USA-states", color='totaljobs', scope="usa", color_continuous_scale='PuRd')
+
+
+wordcloud = WordCloud(width = 3000, height = 2000, colormap="Blues").generate(" ".join(sh_df.title))
+buf = io.BytesIO() # in-memory files
+plt.figure()
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.savefig(buf, format = "png", dpi=600, bbox_inches = 'tight', pad_inches = 0) # save to the above file object
+data = base64.b64encode(buf.getbuffer()).decode("utf8") # encode to html elements
+
+sh_df['is_remote'] = np.where(sh_df['location'].str.contains('remote'),1,0)
+colors = px.colors.sequential.RdBu
+sh_remote_job_count = go.Figure(data=[go.Pie(labels=['InPerson','Remote'], 
+                                                values=sh_df['is_remote'].value_counts(), 
+                                                textinfo='label+percent',
+                                                pull=[0,0.1])])
+sh_remote_job_count.update_traces(textfont_size=15,
+                  marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+sh_remote_job_count.update_layout (title_text = 'Average Remote Jobs')
+
+
+who_is_hiring=sh_df.groupby(['company'])['title'].count()     
+who_is_hiring=who_is_hiring.reset_index()
+who_is_hiring=who_is_hiring.sort_values(['title'],ascending=False)
+#who_is_hiring=who_is_hiring.head(15) 
+
+#fig,a=plt.subplots(figsize=(10,6))             
+sh_company_jobcount=px.bar(who_is_hiring[0:10],x="company", y="title", title='Companies Looking to Hiring')
+#sns.barplot(x="company", y="title", data=who_is_hiring);    
+#a.set_xticklabels(who_is_hiring['company'],rotation=90) 
+#a.legend(loc='upper right')
+#a.set_ylabel('Number of Jobs',fontsize=12,color='black')
+#a.set_xlabel('Company Name',fontsize=12,color='black') 
+#a.set_title("Companies Looking to Hiring",fontsize=16,color='black', fontweight='bold')
 ################################################################
 ################################################################
 
@@ -197,11 +271,78 @@ app.layout = html.Div(children=[
            style = H1_formatting
            ),
     
-    html.H1(children="Total jobs Analysis: ",
+    html.H1(children="JobCount by States Analysis: ",
             style = Hr_Large
             ),
     
-    html.H2(children="Top 10 Skills: ",
+    html.Label(['Choose Website:'],style={'font-weight': 'bold', "text-align": "center"}),
+    
+    dcc.Dropdown(id = 'my_dropdown',
+                 options = ['Indeed','Dice','SimplyHired'],
+                 optionHeight=35,                    #height/space between dropdown options
+                 value='Borough',                    #dropdown value selected automatically when page loads
+                 disabled=False,                     #disable dropdown value selection
+                 multi=False,                        #allow multiple dropdown values to be selected
+                 searchable=True,                    #allow user-searching of dropdown values
+                 search_value='',                    #remembers the value searched in dropdown
+                 placeholder='Please select ...',     #gray, default text shown when no option is selected
+                 clearable=True,                     #allow user to removes the selected value
+                 style={'width':"100%"},             #use dictionary to define CSS styles of your dropdown
+                 # className='select_box',           #activate separate CSS document in assets folder
+                 # persistence=True,                 #remembers dropdown value. Used with persistence_type
+                 # persistence_type='memory'         #remembers dropdown value selected until...
+            ),                                  #'memory': browser tab is refreshed
+                                                #'session': browser tab is closed
+                                                #'local': browser cookies are deleted
+                                                
+     html.Hr(
+         style = Hr_Large
+     ),
+                                                 
+     html.H1(children="Job Distribution By States Across USA: ",
+             style = H2_formating
+             ),
+     
+    dcc.Graph(
+         
+         id='jobs_by_state',
+         figure = jobs_by_state
+     ),
+     
+    html.P(''' ADD TEXT HERE'''    
+                , style = P_formating),
+                                        
+    html.H2(children="Job Distribution across Michigan: ",
+            style = H2_formating
+            ),
+    
+    dcc.Graph(
+        
+        id='jobs_by_MI',
+        figure = jobs_by_MI
+    ),
+    
+    html.P(''' ADD TEXT HERE'''    
+               , style = P_formating),   
+
+    html.H2(children="Job Distribution Across Maryland: ",
+            style = H2_formating
+            ),
+    
+    dcc.Graph(
+        
+        id='jobs_by_MD',
+        figure = jobs_by_MD
+    ),
+    
+    html.P(''' ADD TEXT HERE'''    
+               , style = P_formating),     
+                                                
+    html.Hr(
+        style = Hr_Large
+    ),
+                                                
+    html.H1(children="Top 10 Skills: ",
             style = H2_formating
             ),
     
@@ -284,6 +425,24 @@ app.layout = html.Div(children=[
             figure=job_distribution_count,
             style={'width': '800'}
         ), style={'display': 'inline-block'}),
+    
+    
+    html.Hr(
+        style = Hr_Large
+        ),
+                                             
+    html.H1(children="Top 10 companies By Jobs: ",
+         style = H2_formating
+         ),
+ 
+    dcc.Graph(     
+        id='Companies_by_website',
+        figure = Companies_by_website
+        ),
+ 
+    html.P(''' ADD TEXT HERE'''    
+            , style = P_formating),
+                                    
     
     #### Indeed.com ####
     
@@ -460,16 +619,39 @@ app.layout = html.Div(children=[
         id='job_count_map_dice',
         figure=dice_job_count_map 
     ),
+
+    ############ SimplyHired.com ##########
+    
+    html.Hr(
+        style = Hr_Large
+    ),
+    
+    html.Div(children = "SimplyHired.com :",
+            style = {
+               'textAlign' : 'left',
+               'color' : '#3F92B7',
+               }
+           ),
+    
+    html.H1(children="SimplyHired.com Analysis: ",
+            style = Hr_Large
+            ),
+    
     
     dcc.Graph(
-        id='dice_jobs_across_USA',
-        figure=dice_jobs_across_USA 
-    )
+        id='sh_job_count_map',
+        figure=sh_job_count_map 
+    ),
     
-    #dcc.Graph(
-    #    id='dice_MI_jobs',
-    #    figure=dice_MI_jobs 
-    #)
+    dcc.Graph(
+           id='simplyhired_remote_count',
+           figure= sh_remote_job_count 
+    ),
+       
+    dcc.Graph(
+       id='sh_company_jobcount',
+       figure= sh_company_jobcount
+    )     
     
 ])
 
