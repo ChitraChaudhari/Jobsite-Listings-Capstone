@@ -71,7 +71,7 @@ upper_ranges = id_income_data[id_income_data['salary_upper_range'] != 0]
 id_income_data['avg_income'] = lower_ranges['salary_lower_range']
 upper_ranges['avg_income'] = (upper_ranges['salary_lower_range'] + upper_ranges['salary_upper_range'])/2
 id_income_data= pd.concat([lower_ranges,upper_ranges])
-id_income_box = px.box(id_income_data, x="datadate", y="avg_income", color="job_type")
+id_income_box = px.box(id_income_data, x="datadate", y="avg_income", color="job_type", labels={'datadate':'Date','avg_income':'Average Income'})
 
 
 indeed_income_map_df = id_income_data[['state','avg_income']].groupby('state').mean('avg_income')
@@ -86,13 +86,13 @@ indeed_income_map = px.choropleth(indeed_income_map_df,
 
 
 
-id_df_income_Scatter = px.box(id_income_data[((id_income_data['is_entrylevel'] != 0) & id_income_data['avg_income'] != 0)], x="experience_level", y="avg_income", points="all")
+id_df_income_Scatter = px.box(id_income_data[((id_income_data['is_entrylevel'] != 0) & id_income_data['avg_income'] != 0)], x="experience_level", y="avg_income", points="all",labels={'experience_level':'Experience Level','avg_income':'Average Income'})
 
 
 avg_income_by_state_scatter = px.scatter(id_income_data, 
                               x="state", y="avg_income",
                               color="job_type",
-                              hover_name="title", size_max=15)
+                              hover_name="title", size_max=15, labels={'state':'State','avg_income':'Average Income'})
                               
                               
 ###### Dice.com VISUALS ########  
@@ -105,6 +105,13 @@ stateJobCount.columns = ['state','totaljobs']
 dice_job_count_map = px.choropleth(stateJobCount,locations='state', locationmode="USA-states", color='totaljobs', scope="usa", color_continuous_scale='PuRd')
 dice_job_count_map.update_layout (title_text = 'Jobs count across state')
 
+
+employer_pie = old_df.company.value_counts()[:10].to_frame()
+employer_pie = employer_pie.reset_index()
+employer_pie.columns = ['Employer','Job Count']
+dice_hist_employer_pie = px.pie(employer_pie, values='Job Count', names='Employer', color='Employer')
+        
+        
 
 ###### Total Jobs EDA VISUALS ########
 
@@ -142,6 +149,11 @@ remote_jobs_per_year =  px.line(df, x="Year", y="Average_Jobs", markers=True, ti
 result = new_df.skills.str.split(',',expand=True).stack().value_counts().reset_index()
 result.columns = ['Word','Frequency']
 result = result[0:]
+
+
+dice_historic_skillsbar = px.bar(result, x='Word', y='Frequency')
+
+
 
 top_skills = px.funnel( x=result.Frequency.values[0:10], y=result.Word.values[0:10])
 
@@ -270,16 +282,13 @@ Hr_Large = {'color' : '#3F92B7','border-top' : '35px solid #C9C7C7'}
 
 app.layout = html.Div(children=[
     
-    html.H1(children="Welcom To Job DashBoard !!",
+    html.H1(children="Job Listing Dashbaord (indeed.com, simplyhired.com, dice.com)",
            style = H1_formatting
            ),
 
     ###############################################
     ############## Jobs by Title ##################
     ###############################################
-    html.Hr(
-        style = Hr_Large
-    ),
     
     html.Div(id='JobTitleAnalysisResults',children=[
         html.H2(children="Job Distribution: ",
@@ -340,9 +349,7 @@ app.layout = html.Div(children=[
     ###############################################
     ################## Salary #####################
     ###############################################
-    html.Hr(
-        style = Hr_Large
-    ),
+ 
     
     html.Div(id='IncomeAnalysisResults',children=[
             
@@ -526,6 +533,70 @@ app.layout = html.Div(children=[
                 style = P_formating),
     ]),
     
+    
+    html.Div(id='DiceHistoric',children=[
+        
+        html.Hr(
+            style = Hr_Large
+            ),
+        
+        
+        html.H2('Fall 2021 Dice.com Top Marketable Skills',
+             style = H2_formating),
+        
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        
+        
+        dcc.Graph(id='Dice_Hist_SkillsBar',
+                figure=dice_historic_skillsbar),
+        
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        
+        
+        html.H2('Fall 2021 Dice.com Employer Distribution',
+             style = H2_formating),
+        
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        
+        
+        
+        dcc.Graph(id='Dice_Hist_Employerpie',
+                figure=dice_hist_employer_pie),
+        
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        
+        
+        html.Hr(
+            style = Hr_Large
+            )
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+     ]),
+
+    
+    
+    
+    
     ###############################################
     ############### Jobs by State #################
     ###############################################
@@ -577,7 +648,18 @@ app.layout = html.Div(children=[
                         figure = jobs_by_MD),
     
             html.P(''' ADD TEXT HERE''', 
-                        style = P_formating)  
+                        style = P_formating),
+            
+            
+            
+            html.H1(children="Conclusion",
+                   style = H1_formatting
+                   ),
+            
+            
+            html.P(''' ADD CONCLUSION HERE''', 
+                        style = P_formating)
+            
         ])
     ])  
 ])
