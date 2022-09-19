@@ -12,11 +12,11 @@ import plotly.express as px
 import pandas as pd
 from plotly import graph_objects as go
 import matplotlib.pyplot as plt
-import squarify
 from wordcloud import WordCloud
 import io
 import base64
 import numpy as np
+from dash import Input, Output
 
 
 app = dash.Dash(__name__)
@@ -145,14 +145,6 @@ result = result[0:]
 
 top_skills = px.funnel( x=result.Frequency.values[0:10], y=result.Word.values[0:10])
 
-#top_skills = go.Figure(go.Funnel(
-#    y = result.Word.values[0:11],
-#    x = result.Frequency.values[0:11],
-#    textposition = "inside",
-#    textinfo = "value+percent initial")
- #   )
- 
-
 job_distribution_avg = px.pie( values=new_df.job_type.value_counts(), 
                           names=new_df.job_type.value_counts().index, 
                           title="Jobs available By Job Category")
@@ -270,74 +262,39 @@ app.layout = html.Div(children=[
     html.H1(children="Welcom To Job DashBoard !!",
            style = H1_formatting
            ),
+    ###############################################
+    ############## Jobs by Title ##################
+    ###############################################
+    html.Hr(
+        style = Hr_Large
+    ),
     
-    html.H1(children="JobCount by States Analysis: ",
-            style = Hr_Large
-            ),
-    
-    html.Label(['Choose Website:'],style={'font-weight': 'bold', "text-align": "center"}),
-    
-    dcc.Dropdown(id = 'my_dropdown',
-                 options = ['Indeed','Dice','SimplyHired'],
-                 optionHeight=35,                    #height/space between dropdown options
-                 value='Borough',                    #dropdown value selected automatically when page loads
-                 disabled=False,                     #disable dropdown value selection
-                 multi=False,                        #allow multiple dropdown values to be selected
-                 searchable=True,                    #allow user-searching of dropdown values
-                 search_value='',                    #remembers the value searched in dropdown
-                 placeholder='Please select ...',     #gray, default text shown when no option is selected
-                 clearable=True,                     #allow user to removes the selected value
-                 style={'width':"100%"},             #use dictionary to define CSS styles of your dropdown
-                 # className='select_box',           #activate separate CSS document in assets folder
-                 # persistence=True,                 #remembers dropdown value. Used with persistence_type
-                 # persistence_type='memory'         #remembers dropdown value selected until...
-            ),                                  #'memory': browser tab is refreshed
-                                                #'session': browser tab is closed
-                                                #'local': browser cookies are deleted
-                                                
-     html.Hr(
-         style = Hr_Large
-     ),
-                                                 
-     html.H1(children="Job Distribution By States Across USA: ",
-             style = H2_formating
-             ),
-     
-    dcc.Graph(
-         
-         id='jobs_by_state',
-         figure = jobs_by_state
-     ),
-     
-    html.P(''' ADD TEXT HERE'''    
-                , style = P_formating),
-                                        
-    html.H2(children="Job Distribution across Michigan: ",
+    html.H2(children="Job Distribution: ",
             style = H2_formating
             ),
     
-    dcc.Graph(
-        
-        id='jobs_by_MI',
-        figure = jobs_by_MI
-    ),
+    html.P(''' Even though we are seeing different trend on different job sites, 
+               when we combined all the data from different job sites we see that majority are titled Data Engineer. 
+               And intrestingly almost 78% jobs are for Data Engineer and Data analyst !! '''    
+               , style = P_formating),
     
-    html.P(''' ADD TEXT HERE'''    
-               , style = P_formating),   
-
-    html.H2(children="Job Distribution Across Maryland: ",
-            style = H2_formating
-            ),
+    html.Div(
+        dcc.Graph(
+            id='job_distribution',
+            figure=job_distribution_avg,
+            style={'width': '800'}
+        ), style={'display': 'inline-block'}),
     
-    dcc.Graph(
-        
-        id='jobs_by_MD',
-        figure = jobs_by_MD
-    ),
+    html.Div(
+        dcc.Graph(
+            id='job_distribution_count',
+            figure=job_distribution_count,
+            style={'width': '800'}
+        ), style={'display': 'inline-block'}),
     
-    html.P(''' ADD TEXT HERE'''    
-               , style = P_formating),     
-                                                
+    ###############################################
+    ################## Skills #####################
+    ###############################################
     html.Hr(
         style = Hr_Large
     ),
@@ -368,124 +325,16 @@ app.layout = html.Div(children=[
                into top-10 skills asked.'''    
                , style = P_formating),
     
-    html.Hr(
-        style = Hr_Large
-    ),
-    
-    html.H2(children="Remote Jobs Trend: ",
-            style = H2_formating
-            ),
-        
-    html.Div(
-       dcc.Graph(
-           id='Remote_Jobs_Per_Year',
-           figure=remote_jobs_per_year,
-           style={'width': '800'}
-       ), style={'display': 'inline-block'}),
-    
-   html.Div(
-       dcc.Graph(
-           id='Remote_Jobs_Trend',
-           figure=remote_jobs_trend,
-           style={'width': '800'}
-       ), style={'display': 'inline-block'}),
-    
-    
-    html.P('''The outbreak of COVID-19 prompted many employers to shift to a remote work model for all employees 
-               possible in a bid to limit the spread of the coronavirus.  Working remotely has traditionally held
-               a bad reputation, but more and more companies are adopting work-from-home policies.
-               Even though most of the companies started InPerson work we still see the remote work trend 
-               keep on going due to felxibility it offers. From above charts we definately see the increase 
-               in remote jobs between March 2022 and September 2022 by almost 13%. '''    
-               , style = P_formating),
-    
-    html.Hr(
-        style = Hr_Large
-    ),
-    
-    html.H2(children="Job Distribution: ",
-            style = H2_formating
-            ),
-    
-    html.P(''' Even though we are seeing different trend on different job sites, 
-               when we combined all the data from different job sites we see that majority are titled Data Engineer. 
-               And intrestingly almost 78% jobs are for Data Engineer and Data analyst !! '''    
-               , style = P_formating),
-    
-    html.Div(
-        dcc.Graph(
-            id='job_distribution',
-            figure=job_distribution_avg,
-            style={'width': '800'}
-        ), style={'display': 'inline-block'}),
-    
-    html.Div(
-        dcc.Graph(
-            id='job_distribution_count',
-            figure=job_distribution_count,
-            style={'width': '800'}
-        ), style={'display': 'inline-block'}),
-    
-    
-    html.Hr(
-        style = Hr_Large
-        ),
-                                             
-    html.H1(children="Top 10 companies By Jobs: ",
-         style = H2_formating
-         ),
- 
-    dcc.Graph(     
-        id='Companies_by_website',
-        figure = Companies_by_website
-        ),
- 
-    html.P(''' ADD TEXT HERE'''    
-            , style = P_formating),
-                                    
-    
-    #### Indeed.com ####
-    
-    html.H1(children="Indeed.com Analysis: ",
-            style = Hr_Large
-            ),
-    
-    
-    dcc.Graph(
-        id='job_count_map_indeed',
-        figure=indeed_job_count_map 
-    ),
-    
-    
+    ###############################################
+    ################## Salary #####################
+    ###############################################
     html.Hr(
         style = Hr_Large
     ),
     
     html.Div(id = 'IncomeIncomeAnalysisResults', children=[
-    
-            html.H2('Indeed.com: Job Count and Proportion of Remote Jobs',
-                    style = H2_formating),
-    
-            html.P('''Over the past 3 years COVID19 has had a siginificant impact on how tech professionals live their lives. 
-                       In order to keep up with remote education for children and many other factors, many individuals may need to work 
-                       remote either part or full time. By extracting the keyword remote from the location and job title column,
-                       we will be able to determine the proportion of Data Analyst, 
-                       Data Scientist, and Data Engineer posisitons that offer the ability to work remotely.'''    
-           
-                       , style = P_formating),
-    
-            dcc.Graph(
-                    id='Remote-Chart',
-                    figure=indeed_remote_hist),
-    
-            html.P('''57% of Data Analyst listings, and 58% of Data Engineer listings offer the ability to work remote according to the 
-                        Indeed.come data set. On the other hand, Data Scientist has a nearly exact 50/50 split. It is interesting to note that 
-                       Data Science also has a smaller number of job listings compared to the other two job titles, despite scraping the same 
-                       amount of raw data. This suggests that Data Science may have more specialized job titles which are not as clearly defined 
-                       as Analyst or Engineer.'''
-                       , style = P_formating),
             
-            html.H1('Indeed.com: Income Analysis',
+            html.H1('Income Analysis',
             style = H1_formatting),
     
             html.H2('Indeed.com: Income and Job Type by State',
@@ -573,90 +422,198 @@ app.layout = html.Div(children=[
                    map is much more evenly distributed. This is surprising considering the fact we expected that due to smaller population sizes, 
                    there would be more variance.'''    
                       , style = P_formating),
-            
-            
-            html.Hr(style=Hr_Large)
         
             ]),
     
     html.Hr(
         style = Hr_Large
     ),
-        
-        
     
-    ##### Dice.com ####
-    html.Div(children = "Dice.com :",
-            style = {
-               'textAlign' : 'left',
-               'color' : '#3F92B7',
-               }
-           ),
+    ###############################################
+    ################# Company #####################
+    ###############################################'=
+                                     
+    html.H1(children="Top 10 companies By Jobs: ",
+         style = H2_formating
+         ),
+ 
+    dcc.Graph(     
+        id='Companies_by_website',
+        figure = Companies_by_website
+        ),
+ 
+    html.P(''' ADD TEXT HERE'''    
+            , style = P_formating),
+                                    
     
-    html.Div(
-       dcc.Graph(
-           id='dice_remote_count',
-           figure= dice_remote_job_count,
-           style={'width': '800'}
-       ), style={'display': 'inline-block'}),
-    
-   html.Div(
-       dcc.Graph(
-           id='old_dice_remote_job_count',
-           figure= old_dice_remote_job_count,
-           style={'width': '800'}
-       ), style={'display': 'inline-block'}),
-   
-   html.H2('Dice.com: Job Count and Proportion of Remote Jobs',
-           style = H2_formating),
-   
-   dcc.Graph(
-           id='Dice_Remote-Chart',
-           figure=dice_remote_hist
-           ),
-    
-    dcc.Graph(
-        id='job_count_map_dice',
-        figure=dice_job_count_map 
-    ),
-
-    ############ SimplyHired.com ##########
-    
+    ###############################################
+    ############### Remote Jobs ###################
+    ###############################################
     html.Hr(
         style = Hr_Large
     ),
     
-    html.Div(children = "SimplyHired.com :",
-            style = {
-               'textAlign' : 'left',
-               'color' : '#3F92B7',
-               }
-           ),
+    html.H2(children="Remote Jobs Trend: ",
+            style = H2_formating
+            ),
+        
+    html.Div(
+       dcc.Graph(
+           id='Remote_Jobs_Per_Year',
+           figure=remote_jobs_per_year,
+           style={'width': '800'}
+       ), style={'display': 'inline-block'}),
     
-    html.H1(children="SimplyHired.com Analysis: ",
-            style = Hr_Large
+    html.Div(
+       dcc.Graph(
+           id='Remote_Jobs_Trend',
+           figure=remote_jobs_trend,
+           style={'width': '800'}
+       ), style={'display': 'inline-block'}),
+   
+    html.Div(
+      dcc.Graph(
+          id='dice_remote_count',
+          figure= dice_remote_job_count,
+          style={'width': '800'}
+      ), style={'display': 'inline-block'}),
+   
+    html.Div(
+      dcc.Graph(
+          id='old_dice_remote_job_count',
+          figure= old_dice_remote_job_count,
+          style={'width': '800'}
+      ), style={'display': 'inline-block'}),  
+    
+   html.P('''The outbreak of COVID-19 prompted many employers to shift to a remote work model for all employees 
+              possible in a bid to limit the spread of the coronavirus.  Working remotely has traditionally held
+              a bad reputation, but more and more companies are adopting work-from-home policies.
+              Even though most of the companies started InPerson work we still see the remote work trend 
+              keep on going due to felxibility it offers. From above charts we definately see the increase 
+              in remote jobs between March 2022 and September 2022 by almost 13%. '''    
+              , style = P_formating),
+    
+    html.H2('Indeed.com: Job Count and Proportion of Remote Jobs',
+          style = H2_formating),
+
+    html.P('''Over the past 3 years COVID19 has had a siginificant impact on how tech professionals live their lives. 
+             In order to keep up with remote education for children and many other factors, many individuals may need to work 
+             remote either part or full time. By extracting the keyword remote from the location and job title column,
+             we will be able to determine the proportion of Data Analyst, 
+             Data Scientist, and Data Engineer posisitons that offer the ability to work remotely.'''    
+ 
+             , style = P_formating),
+
+    dcc.Graph(
+          id='Remote-Chart',
+          figure=indeed_remote_hist),
+
+    html.P('''57% of Data Analyst listings, and 58% of Data Engineer listings offer the ability to work remote according to the 
+              Indeed.come data set. On the other hand, Data Scientist has a nearly exact 50/50 split. It is interesting to note that 
+             Data Science also has a smaller number of job listings compared to the other two job titles, despite scraping the same 
+             amount of raw data. This suggests that Data Science may have more specialized job titles which are not as clearly defined 
+             as Analyst or Engineer.'''
+             , style = P_formating),
+    
+    
+    
+    html.H2('Dice.com: Job Count and Proportion of Remote Jobs',
+            style = H2_formating),
+    
+    dcc.Graph(
+            id='Dice_Remote-Chart',
+            figure=dice_remote_hist
             ),
     
+    html.P(''' ADD TEXT HERE'''    
+            , style = P_formating),
+  
     
+    ###############################################
+    ############### Jobs by State #################
+    ###############################################
+     html.Hr(
+         style = Hr_Large
+     ),
+                                                 
+     html.H1(children="Job Distribution By States Across USA: ",
+             style = H2_formating
+             ),
+     
     dcc.Graph(
-        id='sh_job_count_map',
-        figure=sh_job_count_map 
-    ),
-    
-    dcc.Graph(
-           id='simplyhired_remote_count',
-           figure= sh_remote_job_count 
-    ),
+         
+         id='jobs_by_state',
+         figure = jobs_by_state
+     ),
+     
+    html.P(''' ADD TEXT HERE'''    
+                , style = P_formating),
        
+    
+    html.Div([
+        html.Label(['Choose a Website:'],style={'font-weight': 'bold'}),
+        dcc.Dropdown(
+                id='dropdown',
+                options=[
+                    {'label': 'Indeed', 'value': 'graph1'},
+                    {'label': 'Dice', 'value': 'graph2'},
+                    {'label': 'SimplyHired', 'value': 'graph3'},
+                    ],
+                value='graph1',
+                style={"width": "100%"}),
+        
+        html.Div(dcc.Graph(id='graph')),        
+        ]),
+
+    
+    html.P(''' ADD TEXT HERE'''    
+            , style = P_formating),
+  
+                                        
+    html.H2(children="Job Distribution across Michigan: ",
+            style = H2_formating
+            ),
+    
     dcc.Graph(
-       id='sh_company_jobcount',
-       figure= sh_company_jobcount
-    )     
+        
+        id='jobs_by_MI',
+        figure = jobs_by_MI
+    ),
+    
+    html.P(''' ADD TEXT HERE'''    
+               , style = P_formating),   
+
+    html.H2(children="Job Distribution Across Maryland: ",
+            style = H2_formating
+            ),
+    
+    dcc.Graph(
+        
+        id='jobs_by_MD',
+        figure = jobs_by_MD
+    ),
+    
+    html.P(''' ADD TEXT HERE'''    
+               , style = P_formating)  
     
 ])
 
 
+@app.callback(
+    Output('graph', 'figure'),
+    [Input(component_id='dropdown', component_property='value')]
+)
 
+def select_graph(value):
+    if value == 'graph1':
+        fig1 = indeed_job_count_map 
+        return fig1
+    elif value == 'graph2':
+        fig2 = dice_job_count_map 
+        return fig2
+    else:
+        fig3 = sh_job_count_map
+        return fig3
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8080)
