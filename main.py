@@ -96,26 +96,6 @@ avg_income_by_state_scatter = px.scatter(id_income_data,
                               
                               
 ###### Dice.com VISUALS ########  
-
-colors = px.colors.sequential.RdBu
-dice_remote_job_count = go.Figure(data=[go.Pie(labels=['InPerson','Remote'], 
-                                                values=dice_df['is_remote'].value_counts(), 
-                                                textinfo='label+percent',
-                                                pull=[0,0.1])])
-dice_remote_job_count.update_traces(textfont_size=15,
-                  marker=dict(colors=colors, line=dict(color='#000000', width=2)))
-dice_remote_job_count.update_layout (title_text = 'Average Remote Jobs Sep 2022')
-
-
-
-old_dice_remote_job_count = go.Figure(data=[go.Pie(labels=['In Person','Remote'], 
-                                                values=old_dice_df['is_remote'].value_counts(), 
-                                                textinfo='label+percent',
-                                                pull=[0,0.1])])
-old_dice_remote_job_count.update_traces(textfont_size=15,
-                  marker=dict(colors=colors, line=dict(color='#000000', width=2)))
-old_dice_remote_job_count.update_layout (title_text = 'Average Remote Jobs March 2022')
-
 dice_remote_hist = px.histogram(dice_df, x="job_type", color="is_remote")
 
 stateJobCount = pd.DataFrame(dice_df['state'].dropna(axis = 0)).value_counts()
@@ -127,6 +107,26 @@ dice_job_count_map.update_layout (title_text = 'Jobs count across state')
 
 
 ###### Total Jobs EDA VISUALS ########
+
+colors = px.colors.sequential.RdBu
+new_total_remote_job_count = go.Figure(data=[go.Pie(labels=['InPerson','Remote'], 
+                                                values=new_df['is_remote'].value_counts(), 
+                                                textinfo='label+percent',
+                                                pull=[0,0.1])])
+new_total_remote_job_count.update_traces(textfont_size=15,
+                  marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+new_total_remote_job_count.update_layout (title_text = 'Average Remote Jobs 2022')
+
+
+
+old_total_remote_job_count = go.Figure(data=[go.Pie(labels=['In Person','Remote'], 
+                                                values=old_df['is_remote'].value_counts(), 
+                                                textinfo='label+percent',
+                                                pull=[0,0.1])])
+old_total_remote_job_count.update_traces(textfont_size=15,
+                  marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+old_total_remote_job_count.update_layout (title_text = 'Average Remote Jobs March 2021')
+
 
 remote_jobs = pd.DataFrame([['2021', old_df['is_remote'].value_counts(normalize=True)[1], 'Yes'],
                             ['2021', old_df['is_remote'].value_counts(normalize=True)[0], 'No'],
@@ -157,6 +157,18 @@ result.columns = ['job_type','job_count']
 job_distribution_count = px.treemap(result, path=[px.Constant("Title"),'job_type'], values='job_count', color='job_count')
 job_distribution_count.update_layout(margin = dict(t=50, l=25, r=25, b=25))
 
+new_job_count = pd.DataFrame(new_df['state'].dropna(axis = 0)).value_counts()
+new_job_count = new_job_count.to_frame()
+new_job_count.reset_index(inplace=True)
+new_job_count.columns = ['state','job_count']
+total_job_count_map = px.choropleth(new_job_count,
+                    locations='state', 
+                    locationmode="USA-states", 
+                    scope="usa",
+                    color='job_count',
+                    color_continuous_scale="PuRd"
+                    ,labels= {'job_count':'Job Count','state':'State'})
+
 result = new_df.groupby(['state','city']).size()
 result = result.to_frame()
 result = result.reset_index()
@@ -174,7 +186,6 @@ md_jobs = result.query("state == 'MD'")
 jobs_by_MD = px.treemap(md_jobs, path=[px.Constant("Maryland"), 'city'], values='job_count')
 jobs_by_MD.update_traces(root_color="lightgrey")
 jobs_by_MD.update_layout(margin = dict(t=50, l=25, r=25, b=25))
-jobs_by_MD.show()
 
 
 dice_df['website'] = 'dice'
@@ -262,6 +273,7 @@ app.layout = html.Div(children=[
     html.H1(children="Welcom To Job DashBoard !!",
            style = H1_formatting
            ),
+
     ###############################################
     ############## Jobs by Title ##################
     ###############################################
@@ -269,28 +281,30 @@ app.layout = html.Div(children=[
         style = Hr_Large
     ),
     
-    html.H2(children="Job Distribution: ",
-            style = H2_formating
-            ),
+    html.Div(id='JobTitleAnalysisResults',children=[
+        html.H2(children="Job Distribution: ",
+                style = H2_formating),
     
-    html.P(''' Even though we are seeing different trend on different job sites, 
+        html.P(''' Even though we are seeing different trend on different job sites, 
                when we combined all the data from different job sites we see that majority are titled Data Engineer. 
                And intrestingly almost 78% jobs are for Data Engineer and Data analyst !! '''    
                , style = P_formating),
     
-    html.Div(
+        html.Div(
         dcc.Graph(
             id='job_distribution',
             figure=job_distribution_avg,
             style={'width': '800'}
         ), style={'display': 'inline-block'}),
     
-    html.Div(
+        html.Div(
         dcc.Graph(
             id='job_distribution_count',
             figure=job_distribution_count,
             style={'width': '800'}
         ), style={'display': 'inline-block'}),
+
+    ]),
     
     ###############################################
     ################## Skills #####################
@@ -298,18 +312,15 @@ app.layout = html.Div(children=[
     html.Hr(
         style = Hr_Large
     ),
-                                                
-    html.H1(children="Top 10 Skills: ",
-            style = H2_formating
-            ),
+
+    html.Div(id='SkillAnalysisResults',children=[                                        
+        html.H1(children="Top 10 Skills: ",
+                style = H2_formating),
     
-    dcc.Graph(
-        
-        id='Top_skills',
-        figure = top_skills
-    ),
+        dcc.Graph(id='Top_skills',
+                  figure = top_skills),
     
-    html.P('''The funnel chart shows the top 10 skills across all data from different job sites that we collected.  
+        html.P('''The funnel chart shows the top 10 skills across all data from different job sites that we collected.  
                Can’t get away from those schemas and their infamous joining syntax yet! And we see that SQL being 
                top required skill here. Relational Database Management Systems (RDBMS) are key still to data discovery 
                and reporting no matter where they reside. Knowledge of terminology and familiarity with algorithms 
@@ -324,7 +335,8 @@ app.layout = html.Div(children=[
                knowledge around IaaS, PaaS, and SaaS implementations. And we can see that as AWS and Azure making 
                into top-10 skills asked.'''    
                , style = P_formating),
-    
+    ]),
+
     ###############################################
     ################## Salary #####################
     ###############################################
@@ -332,7 +344,7 @@ app.layout = html.Div(children=[
         style = Hr_Large
     ),
     
-    html.Div(id = 'IncomeIncomeAnalysisResults', children=[
+    html.Div(id='IncomeAnalysisResults',children=[
             
             html.H1('Income Analysis',
             style = H1_formatting),
@@ -425,27 +437,22 @@ app.layout = html.Div(children=[
         
             ]),
     
-    html.Hr(
-        style = Hr_Large
-    ),
-    
     ###############################################
     ################# Company #####################
     ###############################################'=
-                                     
-    html.H1(children="Top 10 companies By Jobs: ",
-         style = H2_formating
-         ),
- 
-    dcc.Graph(     
-        id='Companies_by_website',
-        figure = Companies_by_website
-        ),
- 
-    html.P(''' ADD TEXT HERE'''    
-            , style = P_formating),
-                                    
+    html.Hr( style = Hr_Large),
     
+    html.Div(id='CompanyAnalysisResults',children=[                                
+        html.H1(children="Top 10 companies By Jobs: ",
+                 style = H2_formating),
+ 
+        dcc.Graph( id='Companies_by_website',
+                   figure = Companies_by_website),
+ 
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),                              
+    ]),
+
     ###############################################
     ############### Remote Jobs ###################
     ###############################################
@@ -453,39 +460,35 @@ app.layout = html.Div(children=[
         style = Hr_Large
     ),
     
-    html.H2(children="Remote Jobs Trend: ",
-            style = H2_formating
-            ),
+    html.Div(id='RemoteJobsAnalysisResults',children=[
+        html.H2(children="Remote Jobs Trend: ",
+                style = H2_formating),
         
-    html.Div(
-       dcc.Graph(
-           id='Remote_Jobs_Per_Year',
-           figure=remote_jobs_per_year,
-           style={'width': '800'}
-       ), style={'display': 'inline-block'}),
+        html.Div(
+            dcc.Graph(id='Remote_Jobs_Per_Year',
+                      figure=remote_jobs_per_year,
+                      style={'width': '400'}
+                    ), style={'display': 'inline-block'}),
     
-    html.Div(
-       dcc.Graph(
-           id='Remote_Jobs_Trend',
-           figure=remote_jobs_trend,
-           style={'width': '800'}
-       ), style={'display': 'inline-block'}),
+        html.Div(
+            dcc.Graph(id='Remote_Jobs_Trend',
+                      figure=remote_jobs_trend,
+                      style={'width': '400'}
+                    ), style={'display': 'inline-block'}),
+        
+        html.Div(
+            dcc.Graph( id='old_total_remote_job_count',
+                       figure= old_total_remote_job_count,
+                       style={'width': '400'}
+                    ), style={'display': 'inline-block'}),
    
-    html.Div(
-      dcc.Graph(
-          id='dice_remote_count',
-          figure= dice_remote_job_count,
-          style={'width': '800'}
-      ), style={'display': 'inline-block'}),
-   
-    html.Div(
-      dcc.Graph(
-          id='old_dice_remote_job_count',
-          figure= old_dice_remote_job_count,
-          style={'width': '800'}
-      ), style={'display': 'inline-block'}),  
+        html.Div(
+            dcc.Graph(id='new_total_remote_count',
+                      figure= new_total_remote_job_count,
+                      style={'width': '400'}
+                    ), style={'display': 'inline-block'}),  
     
-   html.P('''The outbreak of COVID-19 prompted many employers to shift to a remote work model for all employees 
+        html.P('''The outbreak of COVID-19 prompted many employers to shift to a remote work model for all employees 
               possible in a bid to limit the spread of the coronavirus.  Working remotely has traditionally held
               a bad reputation, but more and more companies are adopting work-from-home policies.
               Even though most of the companies started InPerson work we still see the remote work trend 
@@ -493,41 +496,35 @@ app.layout = html.Div(children=[
               in remote jobs between March 2022 and September 2022 by almost 13%. '''    
               , style = P_formating),
     
-    html.H2('Indeed.com: Job Count and Proportion of Remote Jobs',
-          style = H2_formating),
+        html.H2('Indeed.com: Job Count and Proportion of Remote Jobs',
+                style = H2_formating),
 
-    html.P('''Over the past 3 years COVID19 has had a siginificant impact on how tech professionals live their lives. 
+         html.P('''Over the past 3 years COVID19 has had a siginificant impact on how tech professionals live their lives. 
              In order to keep up with remote education for children and many other factors, many individuals may need to work 
              remote either part or full time. By extracting the keyword remote from the location and job title column,
              we will be able to determine the proportion of Data Analyst, 
              Data Scientist, and Data Engineer posisitons that offer the ability to work remotely.'''    
- 
              , style = P_formating),
 
-    dcc.Graph(
-          id='Remote-Chart',
-          figure=indeed_remote_hist),
+        dcc.Graph(id='Remote-Chart',
+                 figure=indeed_remote_hist),
 
-    html.P('''57% of Data Analyst listings, and 58% of Data Engineer listings offer the ability to work remote according to the 
+        html.P('''57% of Data Analyst listings, and 58% of Data Engineer listings offer the ability to work remote according to the 
               Indeed.come data set. On the other hand, Data Scientist has a nearly exact 50/50 split. It is interesting to note that 
-             Data Science also has a smaller number of job listings compared to the other two job titles, despite scraping the same 
-             amount of raw data. This suggests that Data Science may have more specialized job titles which are not as clearly defined 
-             as Analyst or Engineer.'''
+              Data Science also has a smaller number of job listings compared to the other two job titles, despite scraping the same 
+              amount of raw data. This suggests that Data Science may have more specialized job titles which are not as clearly defined 
+              as Analyst or Engineer.'''
              , style = P_formating),
     
-    
-    
-    html.H2('Dice.com: Job Count and Proportion of Remote Jobs',
+        html.H2('Dice.com: Job Count and Proportion of Remote Jobs',
             style = H2_formating),
     
-    dcc.Graph(
-            id='Dice_Remote-Chart',
-            figure=dice_remote_hist
-            ),
+        dcc.Graph(id='Dice_Remote-Chart',
+                figure=dice_remote_hist),
     
-    html.P(''' ADD TEXT HERE'''    
-            , style = P_formating),
-  
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+    ]),
     
     ###############################################
     ############### Jobs by State #################
@@ -536,79 +533,68 @@ app.layout = html.Div(children=[
          style = Hr_Large
      ),
                                                  
-     html.H1(children="Job Distribution By States Across USA: ",
+    html.Div(id='JobsByStateResults',children=[
+        html.H1(children="Job Distribution By States Across USA: ",
              style = H2_formating
              ),
      
-    dcc.Graph(
-         
-         id='jobs_by_state',
-         figure = jobs_by_state
-     ),
-     
-    html.P(''' ADD TEXT HERE'''    
-                , style = P_formating),
-       
-    
-    html.Div([
-        html.Label(['Choose a Website:'],style={'font-weight': 'bold'}),
-        dcc.Dropdown(
-                id='dropdown',
-                options=[
-                    {'label': 'Indeed', 'value': 'graph1'},
-                    {'label': 'Dice', 'value': 'graph2'},
-                    {'label': 'SimplyHired', 'value': 'graph3'},
-                    ],
-                value='graph1',
-                style={"width": "100%"}),
+        html.Div(id='dd_map',children=[
+            html.Label(['Choose a Website:'],style={'font-weight': 'bold'}),
+            dcc.Dropdown(id='dropdown',
+                        options=[{'label': 'All Websites', 'value': 'graph1'},
+                                 {'label': 'Indeed', 'value': 'graph2'},
+                                 {'label': 'Dice', 'value': 'graph3'},
+                                 {'label': 'SimplyHired', 'value': 'graph4'},],
+                        value='graph1',
+                        style={"width": "100%"}),
         
-        html.Div(dcc.Graph(id='graph')),        
+            dcc.Graph(id='graph'),  
+
+            html.P(''' ADD TEXT HERE''', 
+                    style = P_formating)      
         ]),
 
-    
-    html.P(''' ADD TEXT HERE'''    
-            , style = P_formating),
-  
-                                        
-    html.H2(children="Job Distribution across Michigan: ",
-            style = H2_formating
-            ),
-    
-    dcc.Graph(
-        
-        id='jobs_by_MI',
-        figure = jobs_by_MI
-    ),
-    
-    html.P(''' ADD TEXT HERE'''    
-               , style = P_formating),   
+        html.Div(id='treemap',children=[
+            dcc.Graph( id='jobs_by_state',
+                       figure = jobs_by_state),
+     
+            html.P(''' ADD TEXT HERE''',
+                     style = P_formating),
 
-    html.H2(children="Job Distribution Across Maryland: ",
-            style = H2_formating
-            ),
+            html.H2(children="Job Distribution across Michigan: ",
+                    style = H2_formating),
     
-    dcc.Graph(
-        
-        id='jobs_by_MD',
-        figure = jobs_by_MD
-    ),
+            dcc.Graph( id='jobs_by_MI',
+                        figure = jobs_by_MI),
     
-    html.P(''' ADD TEXT HERE'''    
-               , style = P_formating)  
+            html.P(''' ADD TEXT HERE''', 
+                    style = P_formating),
+
+            html.H2(children="Job Distribution Across Maryland: ",
+                        style = H2_formating),
     
+            dcc.Graph(  id='jobs_by_MD',
+                        figure = jobs_by_MD),
+    
+            html.P(''' ADD TEXT HERE''', 
+                        style = P_formating)  
+        ])
+    ])  
 ])
-
 
 @app.callback(
     Output('graph', 'figure'),
-    [Input(component_id='dropdown', component_property='value')]
+    Input(component_id='dropdown', component_property='value')
 )
 
 def select_graph(value):
     if value == 'graph1':
-        fig1 = indeed_job_count_map 
+        fig1 = total_job_count_map 
         return fig1
     elif value == 'graph2':
+        fig2 = indeed_job_count_map 
+        return fig2
+    elif value == 'graph3':
         fig2 = dice_job_count_map 
         return fig2
     else:
