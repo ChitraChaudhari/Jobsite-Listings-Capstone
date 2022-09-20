@@ -322,9 +322,7 @@ app.layout = html.Div(children=[
     ###############################################
     ################## Skills #####################
     ###############################################
-    html.Hr(
-        style = Hr_Large
-    ),
+
 
     html.Div(id='SkillAnalysisResults',children=[    
         html.H1('Skills Analysis',
@@ -406,7 +404,7 @@ app.layout = html.Div(children=[
 
             dcc.Graph(
                     id='Indeed Income Entry Level Analysis',
-                    figure=id_df_income_Scatter),
+                    figure=avg_income_by_state_scatter),
                 
                 
             html.P('''Interestingly it seems that the majority of listing have income below $150k which seems to be the upper end of the average
@@ -432,7 +430,7 @@ app.layout = html.Div(children=[
            
             dcc.Graph(
                     id='Indeed Sate Income Chart',
-                    figure=avg_income_by_state_scatter), 
+                    figure=id_df_income_Scatter), 
         
             
             html.P('''It seems the jobs using the key word entry-level have the lowest income of the keywords plotted, while jr and junior offer slightly higher income levels. 
@@ -467,7 +465,7 @@ app.layout = html.Div(children=[
     ###############################################
     ################# Company #####################
     ###############################################'=
-    html.Hr( style = Hr_Large),
+
     
     html.Div(id='CompanyAnalysisResults',children=[     
 
@@ -507,9 +505,7 @@ app.layout = html.Div(children=[
     ###############################################
     ############### Remote Jobs ###################
     ###############################################
-    html.Hr(
-        style = Hr_Large
-    ),
+
     
     html.Div(id='RemoteJobsAnalysisResults',children=[
         
@@ -582,9 +578,6 @@ app.layout = html.Div(children=[
     ###############################################
     ############### Jobs by State #################
     ###############################################
-     html.Hr(
-         style = Hr_Large
-     ),
                                                  
     html.Div(id='JobsByStateResults',children=[
         
@@ -643,8 +636,46 @@ app.layout = html.Div(children=[
                    ),
             
             
-            html.P(''' ADD CONCLUSION HERE''', 
+            
+            html.H2("1. Quantity/Quality of Data Enineering Opportunities"
+                    , style = H2_formating ),
+            
+            html.P('''When pulling data from these 3 sites, despite pulling the same amount of data for 
+                   each keyword Analyst/Engineer/Scientist, it seems the Data Engneering field has the most 
+                   posistions available at this point in time. Also, Data Engineering has surpassed Data Science for the highest paying discipline. 
+                   ''', 
+                        style = P_formating),
+            
+            
+            html.H2("2. Knowing SQL/Python remains crucial in finding a job"
+                    , style = H2_formating ),
+
+            
+            html.P('''In a data set cultivated by the DE class before us, we found that these were the two most commonly required skills.
+                   This remains true with the new data set we have collected. These skills are crucial for anyone trying to land a job in this industry. ''', 
+                        style = P_formating),
+        
+            
+            html.H2("3. Junior/Jr. vs Entry Level"
+                    , style = H2_formating ),
+            
+    
+            html.P('''Junior, or jr will yield higher salaries than the keyword entry-level. It may be wise to search by this keyword instead of entry-level, 
+                   doing so could earn you up to $10,000 extra salary. ''', 
+                        style = P_formating),
+            
+            
+            html.H2("4. More remote work opportunities"
+                    , style = H2_formating ),
+            
+            
+            
+            html.P('''Despite lifting of COVID restrictions across the country, the number of remote work opportunities has grown more than 10%. 
+                   This indicates that remote work may be here to stay in the future, and is a trend definitely worth keeping an eye on. For the time being, 
+                   it seems about 31.8% of jobs offer some remote opportunity, which is not exclusive to one data discipline.''', 
                         style = P_formating)
+            
+            
             
         ])
     ])  
