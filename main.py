@@ -103,17 +103,19 @@ stateJobCount = stateJobCount.to_frame()
 stateJobCount = stateJobCount.reset_index()
 stateJobCount.columns = ['state','totaljobs']
 dice_job_count_map = px.choropleth(stateJobCount,locations='state', locationmode="USA-states", color='totaljobs', scope="usa", color_continuous_scale='PuRd')
-dice_job_count_map.update_layout (title_text = 'Jobs count across state')
-
-
-employer_pie = old_df.company.value_counts()[:10].to_frame()
-employer_pie = employer_pie.reset_index()
-employer_pie.columns = ['Employer','Job Count']
-dice_hist_employer_pie = px.pie(employer_pie, values='Job Count', names='Employer', color='Employer')
-        
+dice_job_count_map.update_layout (title_text = 'Jobs count across state')      
         
 
 ###### Total Jobs EDA VISUALS ########
+employer_pie = old_df.company.value_counts()[:10].to_frame()
+employer_pie = employer_pie.reset_index()
+employer_pie.columns = ['Employer','Job Count']
+hist_employer_pie = px.pie(employer_pie, values='Job Count', names='Employer', color='Employer', title='Fall 2021')
+
+new_employer_pie = new_df.company.value_counts()[:10].to_frame()
+new_employer_pie = new_employer_pie.reset_index()
+new_employer_pie.columns = ['Employer','Job Count']
+current_employer_pie = px.pie(new_employer_pie, values='Job Count', names='Employer', color='Employer', title='Fall 2022')
 
 colors = px.colors.sequential.RdBu
 new_total_remote_job_count = go.Figure(data=[go.Pie(labels=['InPerson','Remote'], 
@@ -151,7 +153,7 @@ result.columns = ['Word','Frequency']
 result = result[0:]
 
 
-dice_historic_skillsbar = px.bar(result, x='Word', y='Frequency')
+historic_skillsbar = px.bar(result, x='Word', y='Frequency')
 
 
 
@@ -233,13 +235,9 @@ sh_stateJobCount['state'] = sh_stateJobCount['state'].str.strip()
 sh_job_count_map = px.choropleth(sh_stateJobCount,locations='state', locationmode="USA-states", color='totaljobs', scope="usa", color_continuous_scale='PuRd')
 
 
-wordcloud = WordCloud(width = 3000, height = 2000, colormap="Blues").generate(" ".join(sh_df.title))
-buf = io.BytesIO() # in-memory files
-plt.figure()
-plt.imshow(wordcloud, interpolation="bilinear")
-plt.axis("off")
-plt.savefig(buf, format = "png", dpi=600, bbox_inches = 'tight', pad_inches = 0) # save to the above file object
-data = base64.b64encode(buf.getbuffer()).decode("utf8") # encode to html elements
+image_filename = 'Plotly-World_Cloud.png' # replace with your own image
+encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
 
 sh_df['is_remote'] = np.where(sh_df['location'].str.contains('remote'),1,0)
 colors = px.colors.sequential.RdBu
@@ -293,6 +291,12 @@ app.layout = html.Div(children=[
     html.Div(id='JobTitleAnalysisResults',children=[
         html.H2(children="Job Distribution: ",
                 style = H2_formating),
+        
+        html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode()),
+                 id='wordcloud'),
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
     
         html.P(''' Even though we are seeing different trend on different job sites, 
                when we combined all the data from different job sites we see that majority are titled Data Engineer. 
@@ -322,8 +326,11 @@ app.layout = html.Div(children=[
         style = Hr_Large
     ),
 
-    html.Div(id='SkillAnalysisResults',children=[                                        
-        html.H1(children="Top 10 Skills: ",
+    html.Div(id='SkillAnalysisResults',children=[    
+        html.H1('Skills Analysis',
+        style = H1_formatting),
+                                   
+        html.H2(children="Fall 2022 Top 10 Marketable Skills: ",
                 style = H2_formating),
     
         dcc.Graph(id='Top_skills',
@@ -344,6 +351,19 @@ app.layout = html.Div(children=[
                knowledge around IaaS, PaaS, and SaaS implementations. And we can see that as AWS and Azure making 
                into top-10 skills asked.'''    
                , style = P_formating),
+        
+        html.H2('Fall 2021 Top Marketable Skills',
+             style = H2_formating),
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        
+        dcc.Graph(id='Hist_SkillsBar',
+                figure=historic_skillsbar),
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        
     ]),
 
     ###############################################
@@ -449,7 +469,11 @@ app.layout = html.Div(children=[
     ###############################################'=
     html.Hr( style = Hr_Large),
     
-    html.Div(id='CompanyAnalysisResults',children=[                                
+    html.Div(id='CompanyAnalysisResults',children=[     
+
+        html.H1('Company Analysis',
+        style = H1_formatting),
+                           
         html.H1(children="Top 10 companies By Jobs: ",
                  style = H2_formating),
  
@@ -457,7 +481,27 @@ app.layout = html.Div(children=[
                    figure = Companies_by_website),
  
         html.P(''' ADD TEXT HERE''', 
-                style = P_formating),                              
+                style = P_formating),          
+
+        html.H2('Employer Distribution',
+             style = H2_formating),
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),
+        html.Div(
+            dcc.Graph(id='Hist_Employerpie',
+                figure=hist_employer_pie,
+                style={'width': '400'}
+                ), style={'display': 'inline-block'}),
+        
+        html.Div(
+            dcc.Graph(id='Current_Employerpie',
+                figure=current_employer_pie,
+                style={'width': '400'}
+                ), style={'display': 'inline-block'}),
+        
+        html.P(''' ADD TEXT HERE''', 
+                style = P_formating),                    
     ]),
 
     ###############################################
@@ -468,32 +512,32 @@ app.layout = html.Div(children=[
     ),
     
     html.Div(id='RemoteJobsAnalysisResults',children=[
+        
+        html.H1('Remote Jobs Analysis',
+        style = H1_formatting),
+        
         html.H2(children="Remote Jobs Trend: ",
                 style = H2_formating),
         
         html.Div(
             dcc.Graph(id='Remote_Jobs_Per_Year',
-                      figure=remote_jobs_per_year,
-                      style={'width': '400'}
-                    ), style={'display': 'inline-block'}),
+                      figure=remote_jobs_per_year
+                    ), style={'display': 'inline-block','width':'25%'}),
     
         html.Div(
             dcc.Graph(id='Remote_Jobs_Trend',
-                      figure=remote_jobs_trend,
-                      style={'width': '400'}
-                    ), style={'display': 'inline-block'}),
+                      figure=remote_jobs_trend
+                    ), style={'display': 'inline-block','width':'25%'}),
         
         html.Div(
             dcc.Graph( id='old_total_remote_job_count',
-                       figure= old_total_remote_job_count,
-                       style={'width': '400'}
-                    ), style={'display': 'inline-block'}),
+                       figure= old_total_remote_job_count
+                    ), style={'display': 'inline-block','width':'25%'}),
    
         html.Div(
             dcc.Graph(id='new_total_remote_count',
-                      figure= new_total_remote_job_count,
-                      style={'width': '400'}
-                    ), style={'display': 'inline-block'}),  
+                      figure= new_total_remote_job_count
+                    ), style={'display': 'inline-block','width':'25%'}),  
     
         html.P('''The outbreak of COVID-19 prompted many employers to shift to a remote work model for all employees 
               possible in a bid to limit the spread of the coronavirus.  Working remotely has traditionally held
@@ -531,69 +575,7 @@ app.layout = html.Div(children=[
     
         html.P(''' ADD TEXT HERE''', 
                 style = P_formating),
-    ]),
-    
-    
-    html.Div(id='DiceHistoric',children=[
-        
-        html.Hr(
-            style = Hr_Large
-            ),
-        
-        
-        html.H2('Fall 2021 Dice.com Top Marketable Skills',
-             style = H2_formating),
-        
-        
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),
-        
-        
-        dcc.Graph(id='Dice_Hist_SkillsBar',
-                figure=dice_historic_skillsbar),
-        
-        
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),
-        
-        
-        html.H2('Fall 2021 Dice.com Employer Distribution',
-             style = H2_formating),
-        
-        
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),
-        
-        
-        
-        dcc.Graph(id='Dice_Hist_Employerpie',
-                figure=dice_hist_employer_pie),
-        
-        
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),
-        
-        
-        html.Hr(
-            style = Hr_Large
-            )
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-     ]),
-
-    
+    ]),  
     
     
     
@@ -605,6 +587,10 @@ app.layout = html.Div(children=[
      ),
                                                  
     html.Div(id='JobsByStateResults',children=[
+        
+        html.H1('State Analysis',
+        style = H1_formatting),
+        
         html.H1(children="Job Distribution By States Across USA: ",
              style = H2_formating
              ),
