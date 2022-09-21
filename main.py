@@ -147,16 +147,15 @@ remote_jobs_trend = px.bar(remote_jobs,x="Year", y="Average_Jobs", color="Remote
 df = remote_jobs.query("Remote == 'Yes'")
 remote_jobs_per_year =  px.line(df, x="Year", y="Average_Jobs", markers=True, title='Average Remote Jobs Per Year')
 
+result = old_dice_df.skills.str.split(',',expand=True).stack().value_counts().reset_index()
+result.columns = ['Word','Frequency']
+result = result[0:]
+historic_skillsbar = px.bar(result, x='Word', y='Frequency')
+
 
 result = new_df.skills.str.split(',',expand=True).stack().value_counts().reset_index()
 result.columns = ['Word','Frequency']
 result = result[0:]
-
-
-historic_skillsbar = px.bar(result, x='Word', y='Frequency')
-
-
-
 top_skills = px.funnel( x=result.Frequency.values[0:10], y=result.Word.values[0:10])
 
 job_distribution_avg = px.pie( values=new_df.job_type.value_counts(), 
@@ -293,9 +292,13 @@ app.layout = html.Div(children=[
                 style = H2_formating),
         
         html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                 id='wordcloud'),
+                 id='wordcloud',
+                 style={'width':'100%'},),
         
-        html.P(''' ADD TEXT HERE''', 
+        html.P(''' The above figure shows the title of the data jobs. 
+                    The size of the text represents the frequency obtained in the title. 
+                    The largest text "data engineer" demonstrates that highest no of jobs has this title.
+                ''', 
                 style = P_formating),
     
         html.P(''' Even though we are seeing different trend on different job sites, 
@@ -335,31 +338,31 @@ app.layout = html.Div(children=[
                   figure = top_skills),
     
         html.P('''The funnel chart shows the top 10 skills across all data from different job sites that we collected.  
-               Can’t get away from those schemas and their infamous joining syntax yet! And we see that SQL being 
+               Can’t get away from those schemas and their infamous joining syntax yet! We see that SQL is the 
                top required skill here. Relational Database Management Systems (RDBMS) are key still to data discovery 
                and reporting no matter where they reside. Knowledge of terminology and familiarity with algorithms 
                remain an important part of the Data Engineers skillset. At minimum familiarity with Python’s libraries
                NumPy, SciPy, pandas, sci-kit learn and some actual experience with Notebooks (Jupyter or online cloud)
                is vital. Exploratory Data Analysis (EDA) appears again now as part of Data Engineers talents to ensure 
-               ETL /ELT work mentioned earlier is successful. Data quality of the resultant data is crucial as the
-               Data Engineers processes and visualizes datasets. No longer content to be tied to 
-               single cloud vendors companies are opting to join the multi-cloud, instead of which cloud technology 
+               ETL /ELT work mentioned earlier is successful. Data quality of the resultant data is crucial as
+               Data Engineers process and visualize datasets. Content is no longer being tied to 
+               single cloud vendors, as companies are opting to join the multi-cloud. Instead of which cloud technology 
                to choose, many enterprises have already chosen a couple. A Data Engineer still needs to have a
                good understanding of the underlying technologies that make up cloud computing and in particular, 
-               knowledge around IaaS, PaaS, and SaaS implementations. And we can see that as AWS and Azure making 
-               into top-10 skills asked.'''    
+               knowledge around IaaS, PaaS, and SaaS implementations. We can see that AWS and Azure are making the
+               top-10 skills list.'''    
                , style = P_formating),
         
         html.H2('Fall 2021 Top Marketable Skills',
              style = H2_formating),
         
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),
-        
         dcc.Graph(id='Hist_SkillsBar',
                 figure=historic_skillsbar),
         
-        html.P(''' ADD TEXT HERE''', 
+        html.P(''' In the above chart we can see that last year machine learning skill was most needed last year 
+                and hive was the least desirable skill needed from employeers but it's important to know hive because 
+                these are top 20 skills are needed last year. Also older dataset have more jobs related to Data Scientist search so
+                having MAchine Learning as top skill does makes sense.''', 
                 style = P_formating),
         
     ]),
@@ -475,17 +478,23 @@ app.layout = html.Div(children=[
         html.H1(children="Top 10 companies By Jobs: ",
                  style = H2_formating),
  
+        html.P(''' The below visual shows the top 10 companies based on the number of job postings.  
+                    If you are looking for a staffing agency, Dice has the job postings for you.  
+                    If you want direct-hire work, Indeed and SimplyHired will be more your speed.  
+                    Interestingly, if you are looking to work for Indeed, you should check out the SimplyHired website.
+                ''', 
+                style = P_formating),
+
         dcc.Graph( id='Companies_by_website',
                    figure = Companies_by_website),
  
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),          
-
         html.H2('Employer Distribution',
              style = H2_formating),
         
-        html.P(''' ADD TEXT HERE''', 
+        html.P(''' When compared, the 2021 data shows more direct-hire jobs.  Notice the big company names looking for talent.  
+                2022 appears to be a big year for recruiters, as a large amount of staffing agencies have many postings.''', 
                 style = P_formating),
+
         html.Div(
             dcc.Graph(id='Hist_Employerpie',
                 figure=hist_employer_pie,
@@ -496,10 +505,7 @@ app.layout = html.Div(children=[
             dcc.Graph(id='Current_Employerpie',
                 figure=current_employer_pie,
                 style={'width': '400'}
-                ), style={'display': 'inline-block'}),
-        
-        html.P(''' ADD TEXT HERE''', 
-                style = P_formating),                    
+                ), style={'display': 'inline-block'}),                   
     ]),
 
     ###############################################
@@ -539,8 +545,8 @@ app.layout = html.Div(children=[
               possible in a bid to limit the spread of the coronavirus.  Working remotely has traditionally held
               a bad reputation, but more and more companies are adopting work-from-home policies.
               Even though most of the companies started InPerson work we still see the remote work trend 
-              keep on going due to felxibility it offers. From above charts we definately see the increase 
-              in remote jobs between March 2022 and September 2022 by almost 13%. '''    
+              keeps going due to felxibility it offers. From above charts, we definately see the increase 
+              in remote jobs between Fall 2021 and Fall 2022 by almost 13%. '''    
               , style = P_formating),
     
         html.H2('Indeed.com: Job Count and Proportion of Remote Jobs',
@@ -557,7 +563,7 @@ app.layout = html.Div(children=[
                  figure=indeed_remote_hist),
 
         html.P('''57% of Data Analyst listings, and 58% of Data Engineer listings offer the ability to work remote according to the 
-              Indeed.come data set. On the other hand, Data Scientist has a nearly exact 50/50 split. It is interesting to note that 
+              Indeed.com data set. On the other hand, Data Scientist has a nearly exact 50/50 split. It is interesting to note that 
               Data Science also has a smaller number of job listings compared to the other two job titles, despite scraping the same 
               amount of raw data. This suggests that Data Science may have more specialized job titles which are not as clearly defined 
               as Analyst or Engineer.'''
@@ -569,7 +575,10 @@ app.layout = html.Div(children=[
         dcc.Graph(id='Dice_Remote-Chart',
                 figure=dice_remote_hist),
     
-        html.P(''' ADD TEXT HERE''', 
+        html.P(''' Dice does have more Data Engineer jobs available than others combined. But only 20% of Data Analyst listings, 
+                    and 22% of Data Engineer listings offer the ability to work remote according to the Dice.com data set. 
+                    While Data Scientist has only 13% remote jobs. So overall remote job avaibility is very less on Dice. 
+              ''', 
                 style = P_formating),
     ]),  
     
@@ -600,7 +609,10 @@ app.layout = html.Div(children=[
         
             dcc.Graph(id='graph'),  
 
-            html.P(''' ADD TEXT HERE''', 
+            html.P(''' All of the maps show large numbers of jobs in California and Texas, 
+                        but the SimplyHired map appears to have a more national reach.  
+                        Notice Michigan makes the top 10 overall!
+                    ''', 
                     style = P_formating)      
         ]),
 
@@ -608,7 +620,9 @@ app.layout = html.Div(children=[
             dcc.Graph( id='jobs_by_state',
                        figure = jobs_by_state),
      
-            html.P(''' ADD TEXT HERE''',
+            html.P(''' Here you can drill down into each state and see the city distribution.  
+                    California has the most jobs to offer with 1,336, however, New York City, NY has 556 jobs, 
+                    which is almost half the number of California in the city alone.''',
                      style = P_formating),
 
             html.H2(children="Job Distribution across Michigan: ",
@@ -617,7 +631,7 @@ app.layout = html.Div(children=[
             dcc.Graph( id='jobs_by_MI',
                         figure = jobs_by_MI),
     
-            html.P(''' ADD TEXT HERE''', 
+            html.P(''' 64% of the job openings in Michigan are in Detroit, Ann Arbor, and Dearborn.''', 
                     style = P_formating),
 
             html.H2(children="Job Distribution Across Maryland: ",
@@ -626,7 +640,8 @@ app.layout = html.Div(children=[
             dcc.Graph(  id='jobs_by_MD',
                         figure = jobs_by_MD),
     
-            html.P(''' ADD TEXT HERE''', 
+            html.P(''' For Maryland, Baltimore has the most jobs available, however, 
+                        the distribution is more state-wide than Michigan.''', 
                         style = P_formating),
             
             
